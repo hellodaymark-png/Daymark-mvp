@@ -61,8 +61,24 @@ def home():
       <body style="font-family: system-ui; padding: 24px;">
         <h1>Daymark</h1>
         <p>A calm reference point for today.</p>
-        <p><b>Status:</b> GREEN</p>
-        <p style="color:#666;">(Next: live signals)</p>
+
+        <p id="status">Loading status…</p>
+        <p id="drivers" style="color:#555;"></p>
+
+        <script>
+          fetch("/api/daymark?lat=30.0922&lon=-81.5723")
+            .then(r => r.json())
+            .then(data => {
+              document.getElementById("status").innerHTML =
+                "<b>Status:</b> " + data.status;
+              document.getElementById("drivers").innerText =
+                data.drivers.join(" • ");
+            })
+            .catch(() => {
+              document.getElementById("status").innerText =
+                "Status unavailable";
+            });
+        </script>
       </body>
     </html>
     """
