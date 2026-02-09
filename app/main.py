@@ -14,6 +14,7 @@ async def get_airnow_aqi(lat: float, lon: float):
         "longitude": lon,
         "distance": 25,
         "API_KEY": "7316FC1C-3F59-4E21-9BE6-0E8E61B8A6D8",
+        }
 
     async with httpx.AsyncClient(timeout=15.0) as client:
         r = await client.get(AIRNOW_BASE, params=params)
