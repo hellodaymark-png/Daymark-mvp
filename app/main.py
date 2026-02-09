@@ -1,8 +1,37 @@
 from fastapi import FastAPI, Query
 from fastapi.responses import HTMLResponse
+import os
 import httpx
 
 app = FastAPI()
+
+AIRNOW_BASE = "https://www.airnowapi.org/aq/observation/latLong/current"
+
+async def get_airnow_aqi(lat: float, lon: float):
+    params = {
+        "format": "application/json",
+        "latitude": lat,
+        "longitude": lon,
+        "distance": 25,
+        "API_KEY": os.getenv("AIRNOW_API_KEY"),
+    }
+
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        r = await client.get(AIRNOW_BASE, params=params)
+        r.raise_for_status()
+        data = r.json()
+
+    if not data:
+        return None
+
+    # Prefer PM2.5 if available
+    for obs in data:
+        if obs.get("ParameterName") == "PM2.5":
+            return obs.get("AQI")
+
+    # Otherwise fall back to first AQI
+    return data[0].get("AQI")
+
 
 NWS_BASE = "https://api.weather.gov"
 
@@ -43,20 +72,16 @@ async def daymark(lat: float = Query(...), lon: float = Query(...)):
         add_items += ["rain shell", "phone waterproof pouch", "small flashlight", "power bank"]
 
     # ---- Air quality (OpenAQ → PM2.5 → AQI estimate) ----
-    pm25 = await get_openaq_pm25(lat, lon)
-    if pm25 is None:
-        drivers.append("Air quality: unavailable")
-    else:
-        aqi = pm25_to_aqi(pm25)
-        cat = aqi_category(aqi)
-        drivers.append(f"Air quality: AQI ~ {aqi} ({cat})")
-
-        if 51 <= aqi <= 100:
-            score += 10
-            add_items += ["extra water"]
-        elif aqi >= 101:
-            score += 25
-            add_items += ["KN95/N95 mask", "eye drops", "extra water"]
+    aqi = await get_airnow_aqi(lat, lon)
+if aqi is None:
+    drivers.append("Air quality data unavailable")
+elif aqi <= 50:
+    drivers.append(f"Air quality: Good (AQI {aqi})")
+elif aqi <= 100:
+    drivers.append(f"Air quality: Moderate (AQI {aqi})")
+else:
+    drivers.append(f"Air quality: Unhealthy (AQI {aqi})")
+    add_items.append("N95 mask (air quality)")
 
     # ---- Overall status from score ----
     if score <= 24:
