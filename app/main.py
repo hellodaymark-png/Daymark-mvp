@@ -95,15 +95,16 @@ async def daymark(lat: float = Query(...), lon: float = Query(...)):
 
     # ---- Air quality (OpenAQ → PM2.5 → AQI estimate) ----
     aqi = await get_airnow_aqi(lat, lon)
-if aqi is None:
-    drivers.append("Air quality data unavailable")
-elif aqi <= 50:
-    drivers.append(f"Air quality: Good (AQI {aqi})")
-elif aqi <= 100:
-    drivers.append(f"Air quality: Moderate (AQI {aqi})")
-else:
-    drivers.append(f"Air quality: Unhealthy (AQI {aqi})")
-    add_items.append("N95 mask (air quality)")
+
+    if aqi is None:
+        drivers.append("Air quality data unavailable")
+    elif aqi <= 50:
+        drivers.append(f"Air quality: Good (AQI {aqi})")
+    elif aqi <= 100:
+        drivers.append(f"Air quality: Moderate (AQI {aqi})")
+    else:
+        drivers.append(f"Air quality: Unhealthy (AQI {aqi})")
+        add_items.append("N95 mask (air quality)")
 
     # ---- Overall status from score ----
     if score <= 24:
