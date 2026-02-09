@@ -4,6 +4,29 @@ import httpx
 
 app = FastAPI()
 
+@app.get("/debug")
+async def debug(lat: float = 30.0922, lon: float = -81.5723):
+    out = {"lat": lat, "lon": lon}
+
+    # Step 1: NWS alerts
+    try:
+        out["nws_alert_count"] = await get_nws_alert_count(lat, lon)
+    except Exception as e:
+        out["failed_at"] = "nws"
+        out["error"] = repr(e)
+        return out
+
+    # Step 2: OpenAQ PM2.5 (if you added it)
+    try:
+        out["pm25"] = await get_openaq_pm25(lat, lon)
+    except Exception as e:
+        out["failed_at"] = "openaq"
+        out["error"] = repr(e)
+        return out
+
+    out["ok"] = True
+    return out
+
 import math
 import httpx
 
