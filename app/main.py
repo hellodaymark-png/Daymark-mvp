@@ -5,26 +5,6 @@ import httpx
 
 app = FastAPI()
 
-@app.get("/debug")
-async def debug(lat: float = 30.0922, lon: float = -81.5723):
-    out = {"lat": lat, "lon": lon}
-
-    try:
-        out["nws_alert_count"] = await get_nws_alert_count(lat, lon)
-    except Exception as e:
-        out["failed_at"] = "nws"
-        out["error"] = str(e)
-        return out
-
-    try:
-        out["aqi"] = await get_airnow_aqi(lat, lon)
-    except Exception as e:
-        out["failed_at"] = "airnow"
-        out["error"] = str(e)
-        return out
-
-    out["ok"] = True
-    return out
 
 
 AIRNOW_BASE = "https://www.airnowapi.org/aq/observation/latLong/current"
