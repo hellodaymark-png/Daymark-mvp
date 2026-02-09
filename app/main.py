@@ -154,9 +154,6 @@ def home():
 <p id="status">Loading status…</p>
 <p id="aqi" style="margin-top:6px;"></p>
 <p id="drivers" style="color:#555; margin-top:8px;"></p>
-  <div id="status" class="status">Loading status…</div>
-  <div id="aqi" class="aqi"></div>
-  <div id="drivers" class="drivers"></div>
 </div>
         <script>
           fetch("/api/daymark?lat=30.0922&lon=-81.5723")
