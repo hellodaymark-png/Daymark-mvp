@@ -30,7 +30,7 @@ async def debug(lat: float = 30.0922, lon: float = -81.5723):
 import math
 import httpx
 
-OPENAQ_BASE = "https://api.openaq.org/v2"
+OPENAQ_BASE = "https://api.openaq.org/v3"
 
 def pm25_to_aqi(pm: float) -> int:
     """
@@ -68,21 +68,22 @@ def aqi_category(aqi: int) -> str:
         return "Very Unhealthy"
     return "Hazardous"
 
-async def get_openaq_pm25(lat: float, lon: float) -> float | None:
-    """
-    Returns nearest PM2.5 value (µg/m³) if available, else None.
-    """
-    url = f"{OPENAQ_BASE}/latest"
+async def get_openaq_pm25(lat: float, lon: float):
+    url = f"{OPENAQ_BASE}/measurements"
     params = {
         "coordinates": f"{lat},{lon}",
-        "radius": 25000,        # 25 km
+        "radius": 25000,     # 25 km
         "parameter": "pm25",
         "limit": 1,
         "sort": "distance",
+        "order_by": "distance",
+    }
+    headers = {
+        "User-Agent": "Daymark (hello.daymark@gmail.com)"
     }
 
     async with httpx.AsyncClient(timeout=15.0) as client:
-        r = await client.get(url, params=params)
+        r = await client.get(url, params=params, headers=headers)
         r.raise_for_status()
         data = r.json()
 
@@ -90,10 +91,10 @@ async def get_openaq_pm25(lat: float, lon: float) -> float | None:
     if not results:
         return None
 
-    measurements = results[0].get("measurements", [])
-    for m in measurements:
-        if m.get("parameter") == "pm25" and isinstance(m.get("value"), (int, float)):
-            return float(m["value"])
+    value = results[0].get("value")
+    if isinstance(value, (int, float)):
+        return float(value)
+
     return None
 
 
