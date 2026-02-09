@@ -147,11 +147,19 @@ def home():
           fetch("/api/daymark?lat=30.0922&lon=-81.5723")
             .then(r => r.json())
             .then(data => {
-              document.getElementById("status").innerHTML =
-                "<b>Status:</b> " + data.status;
-              document.getElementById("drivers").innerText =
-                data.drivers.join(" • ");
-            })
+  document.getElementById("status").innerHTML =
+    "<b>Status:</b> " + data.status;
+
+  // Pull out air quality line
+  const aqiLine = data.drivers.find(d => d.startsWith("Air quality"));
+  if (aqiLine) {
+    document.getElementById("aqi").innerText = aqiLine;
+  }
+
+  // Show remaining drivers
+  document.getElementById("drivers").innerText =
+    data.drivers.filter(d => !d.startsWith("Air quality")).join(" • ");
+})
             .catch(() => {
               document.getElementById("status").innerText =
                 "Status unavailable";
