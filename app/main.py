@@ -114,6 +114,38 @@ def home():
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>Daymark</title>
+        <style>
+  body {
+    background: #fafafa;
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+  .card {
+    background: white;
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+  }
+  h1 {
+    margin-bottom: 6px;
+  }
+  .status {
+    font-size: 20px;
+    font-weight: 600;
+    margin-top: 12px;
+  }
+  .aqi {
+    margin-top: 6px;
+    font-size: 15px;
+  }
+  .drivers {
+    margin-top: 14px;
+    color: #666;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+</style>
       </head>
       <body style="font-family: system-ui; padding: 24px;">
         <h1>Daymark</h1>
