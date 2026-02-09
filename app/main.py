@@ -4,6 +4,76 @@ import httpx
 
 app = FastAPI()
 
+import math
+import httpx
+
+OPENAQ_BASE = "https://api.openaq.org/v2"
+
+def pm25_to_aqi(pm: float) -> int:
+    """
+    Approximate US EPA AQI from PM2.5 concentration (µg/m³) using standard breakpoints.
+    Note: Best for 24-hr avg; we treat OpenAQ as an estimate signal for v1.
+    """
+    # Breakpoints: (Clow, Chigh, Ilow, Ihigh)
+    bps = [
+        (0.0, 12.0, 0, 50),
+        (12.1, 35.4, 51, 100),
+        (35.5, 55.4, 101, 150),
+        (55.5, 150.4, 151, 200),
+        (150.5, 250.4, 201, 300),
+        (250.5, 350.4, 301, 400),
+        (350.5, 500.4, 401, 500),
+    ]
+
+    pm = max(0.0, float(pm))
+    for clow, chigh, ilow, ihigh in bps:
+        if clow <= pm <= chigh:
+            aqi = (ihigh - ilow) / (chigh - clow) * (pm - clow) + ilow
+            return int(round(aqi))
+    return 500
+
+def aqi_category(aqi: int) -> str:
+    if aqi <= 50:
+        return "Good"
+    if aqi <= 100:
+        return "Moderate"
+    if aqi <= 150:
+        return "Unhealthy for Sensitive Groups"
+    if aqi <= 200:
+        return "Unhealthy"
+    if aqi <= 300:
+        return "Very Unhealthy"
+    return "Hazardous"
+
+async def get_openaq_pm25(lat: float, lon: float) -> float | None:
+    """
+    Returns nearest PM2.5 value (µg/m³) if available, else None.
+    """
+    url = f"{OPENAQ_BASE}/latest"
+    params = {
+        "coordinates": f"{lat},{lon}",
+        "radius": 25000,        # 25 km
+        "parameter": "pm25",
+        "limit": 1,
+        "sort": "distance",
+    }
+
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        r = await client.get(url, params=params)
+        r.raise_for_status()
+        data = r.json()
+
+    results = data.get("results", [])
+    if not results:
+        return None
+
+    measurements = results[0].get("measurements", [])
+    for m in measurements:
+        if m.get("parameter") == "pm25" and isinstance(m.get("value"), (int, float)):
+            return float(m["value"])
+    return None
+
+
 NWS_BASE = "https://api.weather.gov"
 
 @app.get("/health")
@@ -25,23 +95,52 @@ async def get_nws_alert_count(lat: float, lon: float) -> int:
 
 @app.get("/api/daymark")
 async def daymark(lat: float = Query(...), lon: float = Query(...)):
-    alert_count = await get_nws_alert_count(lat, lon)
+    score = 0
+    drivers = []
+    add_items = []
 
+    # ---- Weather alerts (NWS) ----
+    alert_count = await get_nws_alert_count(lat, lon)
     if alert_count == 0:
-        status = "GREEN"
-        score = 0
-        drivers = ["No active weather alerts"]
-        add_items = []
+        drivers.append("No active weather alerts")
     elif alert_count == 1:
-        status = "YELLOW"
-        score = 20
-        drivers = ["1 active weather alert"]
-        add_items = ["rain shell", "phone waterproof pouch", "small flashlight"]
+        score += 20
+        drivers.append("1 active weather alert")
+        add_items += ["rain shell", "phone waterproof pouch", "small flashlight"]
     else:
+        score += 35
+        drivers.append(f"{alert_count} active weather alerts")
+        add_items += ["rain shell", "phone waterproof pouch", "small flashlight", "power bank"]
+
+    # ---- Air quality (OpenAQ → PM2.5 → AQI estimate) ----
+    pm25 = await get_openaq_pm25(lat, lon)
+    if pm25 is None:
+        drivers.append("Air quality: unavailable")
+    else:
+        aqi = pm25_to_aqi(pm25)
+        cat = aqi_category(aqi)
+        drivers.append(f"Air quality: AQI ~ {aqi} ({cat})")
+
+        if 51 <= aqi <= 100:
+            score += 10
+            add_items += ["extra water"]
+        elif aqi >= 101:
+            score += 25
+            add_items += ["KN95/N95 mask", "eye drops", "extra water"]
+
+    # ---- Overall status from score ----
+    if score <= 24:
+        status = "GREEN"
+    elif score <= 44:
+        status = "YELLOW"
+    elif score <= 64:
         status = "ORANGE"
-        score = 35
-        drivers = [f"{alert_count} active weather alerts"]
-        add_items = ["rain shell", "phone waterproof pouch", "small flashlight", "power bank"]
+    else:
+        status = "RED"
+
+    # de-dupe add_items while preserving order
+    seen = set()
+    add_items = [x for x in add_items if not (x in seen or seen.add(x))]
 
     return {
         "status": status,
