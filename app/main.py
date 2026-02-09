@@ -148,13 +148,14 @@ def home():
 </style>
       </head>
       <body style="font-family: system-ui; padding: 24px;">
-        <h1>Daymark</h1>
-        <p>A calm reference point for today.</p>
+<div class="card">
+  <h1>Daymark</h1>
+  <p class="sub">A calm reference point for today.</p>
 
-        <p id="status">Loading status…</p>
-<p id="aqi" style="margin-top:6px;"></p>
-<p id="drivers" style="color:#555; margin-top:8px;"></p>
-
+  <div id="status" class="status">Loading status…</div>
+  <div id="aqi" class="aqi"></div>
+  <div id="drivers" class="drivers"></div>
+</div>
         <script>
           fetch("/api/daymark?lat=30.0922&lon=-81.5723")
             .then(r => r.json())
