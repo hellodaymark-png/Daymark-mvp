@@ -153,9 +153,18 @@ def home():
   <p class="sub">A calm reference point for today.</p>
 <p id="status">Loading status…</p>
 <p id="aqi" style="margin-top:6px;"></p>
+<p id="updated" style="color:#777; font-size:13px; margin-top:4px;"></p>
 <p id="drivers" style="color:#555; margin-top:8px;"></p>
 </div>
         <script>
+        function minutesAgo(iso) {
+  if (!iso) return "";
+  const mins = Math.max(
+    0,
+    Math.round((Date.now() - new Date(iso).getTime()) / 60000)
+  );
+  return mins < 1 ? "Updated just now" : "Updated " + mins + " min ago";
+}
           fetch("/api/daymark?lat=30.0922&lon=-81.5723")
             .then(r => r.json())
             .then(data => {
@@ -173,7 +182,10 @@ document.getElementById("status").innerHTML =
   if (aqiLine) {
     document.getElementById("aqi").innerText = aqiLine;
   }
-
+if (data.air_quality && data.air_quality.fetchedAt) {
+  document.getElementById("updated").innerText =
+    minutesAgo(data.air_quality.fetchedAt);
+}
   // Show remaining drivers
   document.getElementById("drivers").innerText =
     data.drivers.filter(d => !d.startsWith("Air quality")).join(" • ");
