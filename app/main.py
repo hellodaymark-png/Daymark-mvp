@@ -159,8 +159,14 @@ def home():
           fetch("/api/daymark?lat=30.0922&lon=-81.5723")
             .then(r => r.json())
             .then(data => {
-  document.getElementById("status").innerHTML =
-    "<b>Status:</b> " + data.status;
+  const dot =
+  data.status === "GREEN" ? "🟢" :
+  data.status === "YELLOW" ? "🟡" :
+  data.status === "ORANGE" ? "🟠" :
+  "🔴";
+
+document.getElementById("status").innerHTML =
+  "<b>Status:</b> " + dot + " " + data.status;
 
   // Pull out air quality line
   const aqiLine = data.drivers.find(d => d.startsWith("Air quality"));
