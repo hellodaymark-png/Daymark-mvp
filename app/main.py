@@ -157,14 +157,6 @@ def home():
 <p id="drivers" style="color:#555; margin-top:8px;"></p>
 </div>
         <script>
-        function minutesAgo(iso) {
-  if (!iso) return "";
-  const mins = Math.max(
-    0,
-    Math.round((Date.now() - new Date(iso).getTime()) / 60000)
-  );
-  return mins < 1 ? "Updated just now" : "Updated " + mins + " min ago";
-}
           fetch("/api/daymark?lat=30.0922&lon=-81.5723")
             .then(r => r.json())
             .then(data => {
