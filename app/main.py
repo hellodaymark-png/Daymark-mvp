@@ -4,7 +4,7 @@ import os
 import httpx
 
 from datetime import datetime
-from florida_scoring import (
+from app.florida_scoring import (
     FloridaInputs,
     heat_score_fl, rain_score_fl, wind_score_fl,
     compute_wps_fl, compute_iss_fl, compute_cai_fl,
