@@ -12,9 +12,8 @@ from florida_scoring import (
     apply_florida_wind_nuance, compute_av, label_state
 )
 
-router = APIRouter()
 
-@router.get("/api/insurer/florida")
+@app.get("/api/insurer/florida")
 def insurer_florida_example(county: str = "Duval"):
     # TODO: replace these with real pulls (weather feed + county metadata)
     inputs_today = FloridaInputs(
