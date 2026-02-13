@@ -70,7 +70,7 @@ async def daymark(lat: float = Query(...), lon: float = Query(...)):
     add_items = []
 
 @app.get("/api/insurer/florida")
-def insurer_florida_example(county: str = "Duval"):
+async def insurer_florida_example(county: str = "Duval"):
     # v1: static placeholder inputs (we’ll replace with real NWS data next)
     inputs_today = FloridaInputs(
         month=datetime.utcnow().month,
