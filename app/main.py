@@ -69,6 +69,78 @@ async def daymark(lat: float = Query(...), lon: float = Query(...)):
     drivers = []
     add_items = []
 
+@app.get("/api/insurer/florida")
+def insurer_florida_example(county: str = "Duval"):
+    # v1: static placeholder inputs (we’ll replace with real NWS data next)
+    inputs_today = FloridaInputs(
+        month=datetime.utcnow().month,
+        heat_index_f=92,
+        rain_24h_in=0.2,
+        wind_sust_mph=18,
+        tropical_flag=False,
+        pop_density=1200
+    )
+
+    heat = heat_score_fl(inputs_today.month, inputs_today.heat_index_f)
+    rain = rain_score_fl(inputs_today.rain_24h_in, inputs_today.tropical_flag)
+    wind = wind_score_fl(inputs_today.wind_sust_mph, inputs_today.tropical_flag)
+
+    wps = compute_wps_fl(heat, rain, wind)
+
+    # v1 persistence placeholder (0–100); later compute from last 10 days heat score
+    persistence = 40
+    iss = compute_iss_fl(heat, inputs_today.pop_density, persistence)
+
+    # v1 disruption placeholder
+    das = 10
+    cai = compute_cai_fl(wps, iss, das)
+
+    # v1 fake history so AV works immediately; later store daily CAI per county
+    cai_history_5d = [45, 47, 50, 54, cai]
+    delta_3d = cai - cai_history_5d[-4]
+    sts = sts_from_delta_cai(delta_3d)
+
+    range_5d = max(cai_history_5d) - min(cai_history_5d)
+    vex = vex_from_range(range_5d)
+
+    # v1 forecast placeholder: use today’s WPS/wind until we wire NWS forecast
+    forecast_wps_3d_avg = wps
+    wind_score_max_3d = wind
+    fpc = fpc_from_forecast(forecast_wps_3d_avg, wind_score_max_3d, inputs_today.tropical_flag)
+
+    # Florida wind nuance
+    wind_48h_ago_score = 30
+    sts = apply_florida_wind_nuance(
+        sts,
+        wind,
+        wind_48h_ago_score,
+        forecast_wps_3d_avg,
+        inputs_today.tropical_flag
+    )
+
+    av = compute_av(sts, vex, fpc)
+    state = label_state(cai, av)
+
+    return {
+        "county": county,
+        "scores": {
+            "HeatScore": heat,
+            "RainScore": rain,
+            "WindScore": wind,
+            "WPS": wps,
+            "ISS": iss,
+            "DAS": das,
+            "CAI": cai,
+            "STS": sts,
+            "VEX": vex,
+            "FPC": fpc,
+            "AV": av,
+        },
+        "state": state
+    }
+
+    
+
     # ---- Weather alerts (NWS) ----
     alert_count = await get_nws_alert_count(lat, lon)
     if alert_count == 0:
