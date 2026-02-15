@@ -7,6 +7,16 @@ import httpx
 import asyncpg
 from datetime import datetime, timezone
 
+from fastapi import Header, HTTPException
+
+COLLECTOR_TOKEN = os.getenv("COLLECTOR_TOKEN")
+
+def require_collector_token(token: str | None):
+    if not COLLECTOR_TOKEN:
+        return  # allows local dev if unset
+    if token != COLLECTOR_TOKEN:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
 AIRNOW_API_KEY = os.getenv("AIRNOW_API_KEY")
 DATABASE_URL = os.getenv("DATABASE_URL")
 
@@ -295,9 +305,14 @@ async def insurer_florida(county: str = "Duval"):
 
 # Collector route (writes snapshots): Duval + 5 counties
 @app.post("/api/insurer/collect/florida")
-async def collect_insurer_florida():
+async def collect_insurer_florida(
+    x_collector_token: str | None = Header(default=None)
+):
+    require_collector_token(x_collector_token)
+
     run_id = uuid.uuid4()
     snapshot_at = datetime.now(timezone.utc)
+
 
     results = []
     for county in STARTER_FL_COUNTIES:
