@@ -121,7 +121,7 @@ async def get_airnow_aqi(lat: float, lon: float):
         "format": "application/json",
         "latitude": lat,
         "longitude": lon,
-        "distance": 25,
+        "distance": 100,
         "API_KEY": AIRNOW_API_KEY,
     }
 
