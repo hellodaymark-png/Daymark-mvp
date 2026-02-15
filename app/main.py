@@ -228,6 +228,12 @@ async def compute_insurer_fl_county(county: str) -> dict:
 @app.get("/health")
 def health():
     return {"status": "ok"}
+@app.get("/debug/env")
+def debug_env():
+    return {
+        "AIRNOW_API_KEY_set": bool(os.getenv("AIRNOW_API_KEY")),
+        "DATABASE_URL_set": bool(os.getenv("DATABASE_URL")),
+    }
 
 
 @app.get("/api/daymark")
