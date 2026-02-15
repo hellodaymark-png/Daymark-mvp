@@ -35,7 +35,7 @@ app = FastAPI()
 # -----------------------------
 AIRNOW_BASE = "https://www.airnowapi.org/aq/observation/latLong/current"
 NWS_BASE = "https://api.weather.gov"
-DATABASE_URL = os.getenv("DATABASE_URL")
+
 
 STARTER_FL_COUNTIES = [
     "Duval",
@@ -362,14 +362,6 @@ async def latest_snapshots(state: str = "Florida", limit: int = 25):
         "count": len(rows),
         "rows": [dict(r) for r in rows],
     }
-
-
-# Temporary browser version (GET alias)
-@app.get("/api/insurer/collect/florida")
-async def collect_insurer_florida_browser():
-    return await collect_insurer_florida()
-
-
 
 @app.get("/", response_class=HTMLResponse)
 def home():
