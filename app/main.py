@@ -21,7 +21,7 @@ app = FastAPI()
 # Config
 # -----------------------------
 AIRNOW_BASE = "https://www.airnowapi.org/aq/observation/latLong/current"
-AIRNOW_API_KEY = os.getenv("AIRNOW_API_KEY")  # <-- move key to env var
+AIRNOW_API_KEY = os.getenv("7316FC1C-3F59-4E21-9BE6-0E8E61B8A6D8")
 NWS_BASE = "https://api.weather.gov"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
