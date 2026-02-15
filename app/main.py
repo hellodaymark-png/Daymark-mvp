@@ -363,6 +363,30 @@ async def collect_insurer_florida():
         "counties": results,
         "recorded": bool(DATABASE_URL),
     }
+@app.get("/api/insurer/snapshots/latest")
+async def latest_snapshots(state: str = "Florida", limit: int = 25):
+    if not DATABASE_URL:
+        return {"ok": False, "error": "DATABASE_URL not set"}
+
+    pool = await get_db_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            select id, run_id, snapshot_at, state, county, state_label, scores
+            from insurer_snapshots
+            where state = $1
+            order by snapshot_at desc
+            limit $2
+            """,
+            state,
+            limit,
+        )
+
+    return {
+        "ok": True,
+        "count": len(rows),
+        "rows": [dict(r) for r in rows],
+    }
 
 
 # Temporary browser version (GET alias)
