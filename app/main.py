@@ -230,6 +230,8 @@ async def compute_insurer_fl_county(county: str) -> dict:
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
 @app.get("/debug/env")
 def debug_env():
     return {
@@ -237,9 +239,16 @@ def debug_env():
         "DATABASE_URL_set": bool(os.getenv("DATABASE_URL")),
     }
 
+
 @app.get("/debug/ping")
 def debug_ping():
     return {"ok": True}
+
+@app.get("/debug/airnow")
+async def debug_airnow(lat: float, lon: float, distance: int = 50):
+    if not AIRNOW_API_KEY:
+        return {"ok": False, "error": "AIRNOW_API_KEY not set"}
+
     params = {
         "format": "application/json",
         "latitude": lat,
@@ -248,6 +257,14 @@ def debug_ping():
         "API_KEY": AIRNOW_API_KEY,
     }
 
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            r = await client.get(AIRNOW_BASE, params=params)
+            return {"ok": True, "status_code": r.status_code, "data": r.json()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+    
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
             r = await client.get(AIRNOW_BASE, params=params)
