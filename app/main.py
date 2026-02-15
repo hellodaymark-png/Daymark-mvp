@@ -333,7 +333,6 @@ async def daymark(lat: float = Query(...), lon: float = Query(...)):
 async def insurer_florida(county: str = "Duval"):
     return await compute_insurer_fl_county(county)
 
-
 # Collector route (writes snapshots): Duval + 5 counties
 @app.post("/api/insurer/collect/florida")
 async def collect_insurer_florida():
@@ -345,7 +344,6 @@ async def collect_insurer_florida():
         payload = await compute_insurer_fl_county(county)
         results.append(payload)
 
-        # Only record if DB is configured
         if DATABASE_URL:
             await record_snapshot(
                 run_id=run_id,
@@ -365,6 +363,13 @@ async def collect_insurer_florida():
         "counties": results,
         "recorded": bool(DATABASE_URL),
     }
+
+
+# Temporary browser version (GET alias)
+@app.get("/api/insurer/collect/florida")
+async def collect_insurer_florida_browser():
+    return await collect_insurer_florida()
+
 
 
 @app.get("/", response_class=HTMLResponse)
