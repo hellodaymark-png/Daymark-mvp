@@ -24,6 +24,11 @@ from routers.trends import trend_router
 
 app = FastAPI()
 
+@app.get("/debug/routes")
+def debug_routes():
+    return sorted([getattr(r, "path", "") for r in app.routes])
+
+
 app.include_router(counties_router)
 app.include_router(trend_router)
 
@@ -398,10 +403,6 @@ def home():
           <p id="aqi" style="margin-top:6px;"></p>
           <p id="drivers" style="color:#555; margin-top:8px;"></p>
         </div>
-
-@app.get("/debug/routes")
-def debug_routes():
-    return sorted([getattr(r, "path", "") for r in app.routes])
 
         <script>
           fetch("/api/daymark?lat=30.0922&lon=-81.5723")
