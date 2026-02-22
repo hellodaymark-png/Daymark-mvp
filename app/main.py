@@ -24,11 +24,6 @@ from routers.trends import trend_router
 
 app = FastAPI()
 
-@app.get("/debug/routes")
-def debug_routes():
-    return sorted([getattr(r, "path", "") for r in app.routes])
-
-
 app.include_router(counties_router)
 app.include_router(trend_router)
 
@@ -44,7 +39,6 @@ from app.florida_scoring import (
     apply_florida_wind_nuance, compute_av, label_state
 )
 
-app = FastAPI()
 
 # -----------------------------
 # Config
@@ -257,6 +251,10 @@ async def compute_insurer_fl_county(county: str) -> dict:
 def health():
     return {"status": "ok"}
 
+
+@app.get("/debug/routes")
+def debug_routes():
+    return sorted([getattr(r, "path", "") for r in app.routes])
 
 @app.get("/api/daymark")
 async def daymark(lat: float = Query(...), lon: float = Query(...)):
