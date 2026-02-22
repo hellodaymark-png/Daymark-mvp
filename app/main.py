@@ -399,6 +399,10 @@ def home():
           <p id="drivers" style="color:#555; margin-top:8px;"></p>
         </div>
 
+@app.get("/debug/routes")
+def debug_routes():
+    return sorted([getattr(r, "path", "") for r in app.routes])
+
         <script>
           fetch("/api/daymark?lat=30.0922&lon=-81.5723")
             .then(r => r.json())
