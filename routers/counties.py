@@ -4,7 +4,7 @@ from typing import Optional
 
 # IMPORTANT: replace this import with YOUR db connector
 # e.g. from db import get_conn OR from app.db import get_conn
-from db import get_conn  # <-- change this line to match your project
+from app.db import get_conn
 
 router = APIRouter(prefix="/api/counties", tags=["counties"])
 
