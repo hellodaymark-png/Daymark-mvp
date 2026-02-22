@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import Optional, Any, Dict, List
 from datetime import datetime, timedelta, timezone
 
-from db import get_conn  # <-- change this line to match your project
+from app.db import get_conn
 
 trend_router = APIRouter(prefix="/api/trends", tags=["trends"])
 
