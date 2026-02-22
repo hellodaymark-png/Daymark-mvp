@@ -17,6 +17,17 @@ def require_collector_token(token: str | None):
     if token != COLLECTOR_TOKEN:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
+from fastapi import FastAPI
+
+from routers.counties import router as counties_router
+from routers.trends import trend_router
+
+app = FastAPI()
+
+app.include_router(counties_router)
+app.include_router(trend_router)
+
+
 AIRNOW_API_KEY = os.getenv("AIRNOW_API_KEY")
 DATABASE_URL = os.getenv("DATABASE_URL")
 
