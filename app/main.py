@@ -340,14 +340,14 @@ async def compute_insurer_fl_county(county: str) -> dict:
         "AV": av,
     }
 
-      return {
+    }
+
+    return {
         "county": county,
         "county_fips": county_fips,
         "scores": scores,
         "state": state_label
     }
-
-
 # -----------------------------
 # Routes
 # -----------------------------
