@@ -56,6 +56,45 @@ STARTER_FL_COUNTIES = [
     "Palm Beach",
 ]
 
+FL_COUNTY_META = {
+    "Duval": {
+        "fips": "12031",
+        "centroid_lat": 30.3322,
+        "centroid_lon": -81.6557,
+        "pop_density_per_sqmi": 1298.0,
+    },
+    "Miami-Dade": {
+        "fips": "12086",
+        "centroid_lat": 25.7617,
+        "centroid_lon": -80.1918,
+        "pop_density_per_sqmi": 1430.0,
+    },
+    "Hillsborough": {
+        "fips": "12057",
+        "centroid_lat": 27.9904,
+        "centroid_lon": -82.3018,
+        "pop_density_per_sqmi": 1634.0,
+    },
+    "Orange": {
+        "fips": "12095",
+        "centroid_lat": 28.5383,
+        "centroid_lon": -81.3792,
+        "pop_density_per_sqmi": 1556.0,
+    },
+    "Broward": {
+        "fips": "12011",
+        "centroid_lat": 26.1224,
+        "centroid_lon": -80.1373,
+        "pop_density_per_sqmi": 1600.0,
+    },
+    "Palm Beach": {
+        "fips": "12099",
+        "centroid_lat": 26.7153,
+        "centroid_lon": -80.0534,
+        "pop_density_per_sqmi": 774.0,
+    },
+}
+
 _db_pool: asyncpg.Pool | None = None
 
 
@@ -124,6 +163,32 @@ async def record_snapshot(
             model_version,
         )
 
+async def record_county_snapshot(
+    *,
+    county_fips: str,
+    snapshot_ts: datetime,
+    risk_score: float | None,
+    grid_stress_score: float | None,
+    weather_stress_score: float | None,
+    payload: dict | None = None,
+) -> None:
+    pool = await get_db_pool()
+    async with pool.acquire() as conn:
+        await conn.execute(
+            """
+            insert into county_snapshots
+              (county_fips, snapshot_ts, risk_score, grid_stress_score, weather_stress_score, payload)
+            values
+              ($1, $2, $3, $4, $5, $6::jsonb)
+            """,
+            county_fips,
+            snapshot_ts,
+            risk_score,
+            grid_stress_score,
+            weather_stress_score,
+            json.dumps(payload or {}),
+        )
+
 
 @app.on_event("startup")
 async def _startup():
@@ -146,6 +211,40 @@ async def get_airnow_aqi(lat: float, lon: float):
         "distance": 100,
         "API_KEY": AIRNOW_API_KEY,
     }
+
+async def upsert_county_input(
+    *,
+    fips: str,
+    state: str,
+    county_name: str,
+    centroid_lat: float,
+    centroid_lon: float,
+    pop_density_per_sqmi: float | None = None,
+) -> None:
+    pool = await get_db_pool()
+    async with pool.acquire() as conn:
+        await conn.execute(
+            """
+            insert into counties
+              (fips, state, county_name, centroid_lat, centroid_lon, pop_density_per_sqmi)
+            values
+              ($1, $2, $3, $4, $5, $6)
+            on conflict (fips) do update set
+              state = excluded.state,
+              county_name = excluded.county_name,
+              centroid_lat = excluded.centroid_lat,
+              centroid_lon = excluded.centroid_lon,
+              pop_density_per_sqmi = excluded.pop_density_per_sqmi,
+              updated_at = now()
+            """,
+            fips,
+            state,
+            county_name,
+            centroid_lat,
+            centroid_lon,
+            pop_density_per_sqmi,
+        )
+    
 
     async with httpx.AsyncClient(timeout=15.0) as client:
         r = await client.get(AIRNOW_BASE, params=params)
@@ -179,6 +278,10 @@ async def get_nws_alert_count(lat: float, lon: float) -> int:
 # Core insurer compute function
 # -----------------------------
 async def compute_insurer_fl_county(county: str) -> dict:
+
+    county_meta = FL_COUNTY_META.get(county)
+    county_fips = county_meta["fips"] if county_meta else None
+    
     inputs_today = FloridaInputs(
         month=datetime.utcnow().month,
         heat_index_f=92,
@@ -237,8 +340,9 @@ async def compute_insurer_fl_county(county: str) -> dict:
         "AV": av,
     }
 
-    return {
+      return {
         "county": county,
+        "county_fips": county_fips,
         "scores": scores,
         "state": state_label
     }
@@ -344,6 +448,33 @@ async def collect_insurer_florida(
                 model_version="v1",
             )
 
+            county_meta = FL_COUNTY_META.get(county)
+            county_fips = payload.get("county_fips")
+
+            if county_meta and county_fips:
+                await upsert_county_input(
+                    fips=county_fips,
+                    state="FL",
+                    county_name=county,
+                    centroid_lat=county_meta["centroid_lat"],
+                    centroid_lon=county_meta["centroid_lon"],
+                    pop_density_per_sqmi=county_meta.get("pop_density_per_sqmi"),
+                )
+
+                await record_county_snapshot(
+                    county_fips=county_fips,
+                    snapshot_ts=snapshot_at,
+                    risk_score=payload["scores"].get("CAI"),
+                    grid_stress_score=payload["scores"].get("ISS"),
+                    weather_stress_score=payload["scores"].get("WPS"),
+                    payload={
+                        "county": county,
+                        "state": "Florida",
+                        "state_label": payload.get("state"),
+                        "model_version": "v1",
+                        "scores": payload["scores"],
+                    },
+                )
     return {
         "ok": True,
         "run_id": str(run_id),
