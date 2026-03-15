@@ -2,10 +2,12 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional, Any, Dict, List
 from datetime import datetime, timedelta, timezone
+import json
 
 from app.db import get_conn
 
 trend_router = APIRouter(prefix="/api/trends", tags=["trends"])
+
 
 class SnapshotOut(BaseModel):
     snapshot_ts: datetime
@@ -14,13 +16,32 @@ class SnapshotOut(BaseModel):
     weather_stress_score: Optional[float] = None
     payload: Optional[Dict[str, Any]] = None
 
+
 class TrendLatestOut(BaseModel):
     county_fips: str
     latest: Optional[SnapshotOut] = None
 
+
 class TrendLast7Out(BaseModel):
     county_fips: str
     points: List[SnapshotOut]
+
+
+def normalize_snapshot_row(row):
+    if not row:
+        return None
+
+    data = dict(row)
+
+    payload = data.get("payload")
+    if isinstance(payload, str):
+        try:
+            data["payload"] = json.loads(payload)
+        except json.JSONDecodeError:
+            data["payload"] = {"raw": payload}
+
+    return data
+
 
 @trend_router.get("/county/{fips}/latest", response_model=TrendLatestOut)
 async def trend_latest(fips: str):
@@ -28,15 +49,22 @@ async def trend_latest(fips: str):
         raise HTTPException(status_code=400, detail="FIPS must be 5 chars")
 
     async with get_conn() as conn:
-        row = await conn.fetchrow("""
+        row = await conn.fetchrow(
+            """
             SELECT snapshot_ts, risk_score, grid_stress_score, weather_stress_score, payload
             FROM county_snapshots
             WHERE county_fips = $1
             ORDER BY snapshot_ts DESC
             LIMIT 1
-        """, fips)
+            """,
+            fips,
+        )
 
-    return {"county_fips": fips, "latest": dict(row) if row else None}
+    return {
+        "county_fips": fips,
+        "latest": normalize_snapshot_row(row),
+    }
+
 
 @trend_router.get("/county/{fips}/last7", response_model=TrendLast7Out)
 async def trend_last7(fips: str):
@@ -47,13 +75,21 @@ async def trend_last7(fips: str):
     start = now - timedelta(days=7)
 
     async with get_conn() as conn:
-        rows = await conn.fetch("""
+        rows = await conn.fetch(
+            """
             SELECT snapshot_ts, risk_score, grid_stress_score, weather_stress_score, payload
             FROM county_snapshots
             WHERE county_fips = $1
               AND snapshot_ts >= $2
               AND snapshot_ts <= $3
             ORDER BY snapshot_ts ASC
-        """, fips, start, now)
+            """,
+            fips,
+            start,
+            now,
+        )
 
-    return {"county_fips": fips, "points": [dict(r) for r in rows]}
+    return {
+        "county_fips": fips,
+        "points": [normalize_snapshot_row(r) for r in rows],
+    }
