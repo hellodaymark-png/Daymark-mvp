@@ -246,6 +246,18 @@ async def upsert_county_input(
         )
     
 
+ async def get_airnow_aqi(lat: float, lon: float):
+    if not AIRNOW_API_KEY:
+        return None
+
+    params = {
+        "format": "application/json",
+        "latitude": lat,
+        "longitude": lon,
+        "distance": 100,
+        "API_KEY": AIRNOW_API_KEY,
+    }
+
     async with httpx.AsyncClient(timeout=15.0) as client:
         r = await client.get(AIRNOW_BASE, params=params)
         r.raise_for_status()
@@ -259,7 +271,6 @@ async def upsert_county_input(
             return obs.get("AQI")
 
     return data[0].get("AQI")
-
 
 async def get_nws_alert_count(lat: float, lon: float) -> int:
     url = f"{NWS_BASE}/alerts/active"
