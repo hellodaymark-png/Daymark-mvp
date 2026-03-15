@@ -200,17 +200,6 @@ async def _startup():
 # -----------------------------
 # External data helpers
 # -----------------------------
-async def get_airnow_aqi(lat: float, lon: float):
-    if not AIRNOW_API_KEY:
-        return None
-
-    params = {
-        "format": "application/json",
-        "latitude": lat,
-        "longitude": lon,
-        "distance": 100,
-        "API_KEY": AIRNOW_API_KEY,
-    }
 
 async def upsert_county_input(
     *,
