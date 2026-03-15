@@ -200,7 +200,6 @@ async def _startup():
 # -----------------------------
 # External data helpers
 # -----------------------------
-
 async def upsert_county_input(
     *,
     fips: str,
@@ -233,9 +232,9 @@ async def upsert_county_input(
             centroid_lon,
             pop_density_per_sqmi,
         )
-    
 
- async def get_airnow_aqi(lat: float, lon: float):
+
+async def get_airnow_aqi(lat: float, lon: float):
     if not AIRNOW_API_KEY:
         return None
 
