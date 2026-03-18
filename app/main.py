@@ -116,75 +116,75 @@ STARTER_FL_COUNTIES = [
     "Washington",
 ]
 
-"county_name","fips","centroid_lat","centroid_lon","pop_density_per_sqmi"
-St. Johns,"12109",29.8976,-81.381,375.4
-Miami-Dade,"12086",25.7617,-80.1918,1430.0
-Hillsborough,"12057",27.9904,-82.3018,1634.0
-Orange,"12095",28.5383,-81.3792,1556.0
-Alachua,"12001",29.6516,-82.3248,309.0
-Baker,"12003",30.3931,-82.3018,48.0
-Bay,"12005",30.1805,-85.6846,356.0
-Bradford,"12007",29.9494,-82.1714,82.0
-Brevard,"12009",28.2639,-80.7214,572.0
-Calhoun,"12013",30.3475,-85.1894,39.0
-Charlotte,"12015",26.8946,-81.9098,238.0
-Citrus,"12017",28.8483,-82.52,281.0
-Clay,"12019",29.9941,-81.7787,314.0
-Collier,"12021",26.0693,-81.4279,194.0
-Columbia,"12023",30.1897,-82.6393,88.0
-DeSoto,"12027",27.1895,-81.809,70.0
-Dixie,"12029",29.5806,-83.186,24.0
-Escambia,"12033",30.6389,-87.3415,666.0
-Flagler,"12035",29.4086,-81.2519,300.0
-Franklin,"12037",29.7354,-84.8008,14.0
-Gadsden,"12039",30.5793,-84.6133,90.0
-Gilchrist,"12041",29.7241,-82.8206,49.0
-Glades,"12043",26.9615,-81.1086,13.0
-Gulf,"12045",29.9496,-85.175,28.0
-Hamilton,"12047",30.5223,-82.95,21.0
-Hardee,"12049",27.4989,-81.81,74.0
-Hendry,"12051",26.5534,-81.4356,46.0
-Hernando,"12053",28.5636,-82.475,356.0
-Highlands,"12055",27.343,-81.341,100.0
-Holmes,"12059",30.867,-85.815,44.0
-Indian River,"12061",27.6936,-80.384,305.0
-Jackson,"12063",30.774,-85.2269,51.0
-Jefferson,"12065",30.548,-83.912,30.0
-Lafayette,"12067",29.99,-83.18,21.0
-Lake,"12069",28.7615,-81.7129,360.0
-Lee,"12071",26.663,-81.84,1000.0
-Leon,"12073",30.4383,-84.2807,400.0
-Levy,"12075",29.3177,-82.8126,36.0
-Liberty,"12077",30.2376,-84.882,9.0
-Madison,"12079",30.4693,-83.412,31.0
-Manatee,"12081",27.4989,-82.5748,1100.0
-Marion,"12083",29.2108,-82.056,300.0
-Martin,"12085",27.0805,-80.41,350.0
-Monroe,"12087",24.5551,-81.78,80.0
-Nassau,"12089",30.61,-81.822,160.0
-Okaloosa,"12091",30.5772,-86.66,220.0
-Okeechobee,"12093",27.2439,-80.8298,73.0
-Osceola,"12097",28.2919,-81.4076,350.0
-Pasco,"12101",28.3232,-82.4319,800.0
-Pinellas,"12103",27.8764,-82.7779,3500.0
-Polk,"12105",27.9963,-81.6924,370.0
-Putnam,"12107",29.626,-81.65,100.0
-St. Lucie,"12111",27.273,-80.3582,500.0
-Santa Rosa,"12113",30.7038,-87.009,180.0
-Sarasota,"12115",27.3364,-82.5307,1000.0
-Seminole,"12117",28.7097,-81.2081,1400.0
-Sumter,"12119",28.7167,-82.0833,250.0
-Suwannee,"12121",30.396,-82.95,46.0
-Taylor,"12123",30.101,-83.58,40.0
-Union,"12125",30.0691,-82.333,60.0
-Volusia,"12127",29.028,-81.075,500.0
-Wakulla,"12129",30.19,-84.375,70.0
-Walton,"12131",30.6,-86.1,100.0
-Washington,"12133",30.6,-85.6,45.0
-Duval,"12031",30.3322,-81.6557,1298.0
-Broward,"12011",26.1224,-80.1373,1600.0
-Palm Beach,"12099",26.7153,-80.0534,774.0
-
+FL_COUNTY_META = {
+    "St. Johns": {"fips": "12109", "lat": 29.8976, "lon": -81.381, "pop_density": 375.4},
+    "Miami-Dade": {"fips": "12086", "lat": 25.7617, "lon": -80.1918, "pop_density": 1430.0},
+    "Hillsborough": {"fips": "12057", "lat": 27.9904, "lon": -82.3018, "pop_density": 1634.0},
+    "Orange": {"fips": "12095", "lat": 28.5383, "lon": -81.3792, "pop_density": 1556.0},
+    "Alachua": {"fips": "12001", "lat": 29.6516, "lon": -82.3248, "pop_density": 309.0},
+    "Baker": {"fips": "12003", "lat": 30.3931, "lon": -82.3018, "pop_density": 48.0},
+    "Bay": {"fips": "12005", "lat": 30.1805, "lon": -85.6846, "pop_density": 356.0},
+    "Bradford": {"fips": "12007", "lat": 29.9494, "lon": -82.1714, "pop_density": 82.0},
+    "Brevard": {"fips": "12009", "lat": 28.2639, "lon": -80.7214, "pop_density": 572.0},
+    "Calhoun": {"fips": "12013", "lat": 30.3475, "lon": -85.1894, "pop_density": 39.0},
+    "Charlotte": {"fips": "12015", "lat": 26.8946, "lon": -81.9098, "pop_density": 238.0},
+    "Citrus": {"fips": "12017", "lat": 28.8483, "lon": -82.52, "pop_density": 281.0},
+    "Clay": {"fips": "12019", "lat": 29.9941, "lon": -81.7787, "pop_density": 314.0},
+    "Collier": {"fips": "12021", "lat": 26.0693, "lon": -81.4279, "pop_density": 194.0},
+    "Columbia": {"fips": "12023", "lat": 30.1897, "lon": -82.6393, "pop_density": 88.0},
+    "DeSoto": {"fips": "12027", "lat": 27.1895, "lon": -81.809, "pop_density": 70.0},
+    "Dixie": {"fips": "12029", "lat": 29.5806, "lon": -83.186, "pop_density": 24.0},
+    "Escambia": {"fips": "12033", "lat": 30.6389, "lon": -87.3415, "pop_density": 666.0},
+    "Flagler": {"fips": "12035", "lat": 29.4086, "lon": -81.2519, "pop_density": 300.0},
+    "Franklin": {"fips": "12037", "lat": 29.7354, "lon": -84.8008, "pop_density": 14.0},
+    "Gadsden": {"fips": "12039", "lat": 30.5793, "lon": -84.6133, "pop_density": 90.0},
+    "Gilchrist": {"fips": "12041", "lat": 29.7241, "lon": -82.8206, "pop_density": 49.0},
+    "Glades": {"fips": "12043", "lat": 26.9615, "lon": -81.1086, "pop_density": 13.0},
+    "Gulf": {"fips": "12045", "lat": 29.9496, "lon": -85.175, "pop_density": 28.0},
+    "Hamilton": {"fips": "12047", "lat": 30.5223, "lon": -82.95, "pop_density": 21.0},
+    "Hardee": {"fips": "12049", "lat": 27.4989, "lon": -81.81, "pop_density": 74.0},
+    "Hendry": {"fips": "12051", "lat": 26.5534, "lon": -81.4356, "pop_density": 46.0},
+    "Hernando": {"fips": "12053", "lat": 28.5636, "lon": -82.475, "pop_density": 356.0},
+    "Highlands": {"fips": "12055", "lat": 27.343, "lon": -81.341, "pop_density": 100.0},
+    "Holmes": {"fips": "12059", "lat": 30.867, "lon": -85.815, "pop_density": 44.0},
+    "Indian River": {"fips": "12061", "lat": 27.6936, "lon": -80.384, "pop_density": 305.0},
+    "Jackson": {"fips": "12063", "lat": 30.774, "lon": -85.2269, "pop_density": 51.0},
+    "Jefferson": {"fips": "12065", "lat": 30.548, "lon": -83.912, "pop_density": 30.0},
+    "Lafayette": {"fips": "12067", "lat": 29.99, "lon": -83.18, "pop_density": 21.0},
+    "Lake": {"fips": "12069", "lat": 28.7615, "lon": -81.7129, "pop_density": 360.0},
+    "Lee": {"fips": "12071", "lat": 26.663, "lon": -81.84, "pop_density": 1000.0},
+    "Leon": {"fips": "12073", "lat": 30.4383, "lon": -84.2807, "pop_density": 400.0},
+    "Levy": {"fips": "12075", "lat": 29.3177, "lon": -82.8126, "pop_density": 36.0},
+    "Liberty": {"fips": "12077", "lat": 30.2376, "lon": -84.882, "pop_density": 9.0},
+    "Madison": {"fips": "12079", "lat": 30.4693, "lon": -83.412, "pop_density": 31.0},
+    "Manatee": {"fips": "12081", "lat": 27.4989, "lon": -82.5748, "pop_density": 1100.0},
+    "Marion": {"fips": "12083", "lat": 29.2108, "lon": -82.056, "pop_density": 300.0},
+    "Martin": {"fips": "12085", "lat": 27.0805, "lon": -80.41, "pop_density": 350.0},
+    "Monroe": {"fips": "12087", "lat": 24.5551, "lon": -81.78, "pop_density": 80.0},
+    "Nassau": {"fips": "12089", "lat": 30.61, "lon": -81.822, "pop_density": 160.0},
+    "Okaloosa": {"fips": "12091", "lat": 30.5772, "lon": -86.66, "pop_density": 220.0},
+    "Okeechobee": {"fips": "12093", "lat": 27.2439, "lon": -80.8298, "pop_density": 73.0},
+    "Osceola": {"fips": "12097", "lat": 28.2919, "lon": -81.4076, "pop_density": 350.0},
+    "Pasco": {"fips": "12101", "lat": 28.3232, "lon": -82.4319, "pop_density": 800.0},
+    "Pinellas": {"fips": "12103", "lat": 27.8764, "lon": -82.7779, "pop_density": 3500.0},
+    "Polk": {"fips": "12105", "lat": 27.9963, "lon": -81.6924, "pop_density": 370.0},
+    "Putnam": {"fips": "12107", "lat": 29.626, "lon": -81.65, "pop_density": 100.0},
+    "St. Lucie": {"fips": "12111", "lat": 27.273, "lon": -80.3582, "pop_density": 500.0},
+    "Santa Rosa": {"fips": "12113", "lat": 30.7038, "lon": -87.009, "pop_density": 180.0},
+    "Sarasota": {"fips": "12115", "lat": 27.3364, "lon": -82.5307, "pop_density": 1000.0},
+    "Seminole": {"fips": "12117", "lat": 28.7097, "lon": -81.2081, "pop_density": 1400.0},
+    "Sumter": {"fips": "12119", "lat": 28.7167, "lon": -82.0833, "pop_density": 250.0},
+    "Suwannee": {"fips": "12121", "lat": 30.396, "lon": -82.95, "pop_density": 46.0},
+    "Taylor": {"fips": "12123", "lat": 30.101, "lon": -83.58, "pop_density": 40.0},
+    "Union": {"fips": "12125", "lat": 30.0691, "lon": -82.333, "pop_density": 60.0},
+    "Volusia": {"fips": "12127", "lat": 29.028, "lon": -81.075, "pop_density": 500.0},
+    "Wakulla": {"fips": "12129", "lat": 30.19, "lon": -84.375, "pop_density": 70.0},
+    "Walton": {"fips": "12131", "lat": 30.6, "lon": -86.1, "pop_density": 100.0},
+    "Washington": {"fips": "12133", "lat": 30.6, "lon": -85.6, "pop_density": 45.0},
+    "Duval": {"fips": "12031", "lat": 30.3322, "lon": -81.6557, "pop_density": 1298.0},
+    "Broward": {"fips": "12011", "lat": 26.1224, "lon": -80.1373, "pop_density": 1600.0},
+    "Palm Beach": {"fips": "12099", "lat": 26.7153, "lon": -80.0534, "pop_density": 774.0},
+}
 
 _db_pool: asyncpg.Pool | None = None
 
