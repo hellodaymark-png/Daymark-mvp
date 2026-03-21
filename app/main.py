@@ -367,18 +367,21 @@ async def get_nws_alert_count(lat: float, lon: float) -> int:
 # -----------------------------
 # Core insurer compute function
 # -----------------------------
-async def compute_insurer_fl_county(county: str) -> dict:
+async def compute_insurer_fl_county(
+    county: str,
+    county_meta: dict,
+    weather: dict,
+) -> dict:
 
-    county_meta = FL_COUNTY_META.get(county)
-    county_fips = county_meta["fips"] if county_meta else None
-    
+    county_fips = county_meta["fips"]
+
     inputs_today = FloridaInputs(
         month=datetime.utcnow().month,
-        heat_index_f=92,
-        rain_24h_in=0.2,
-        wind_sust_mph=18,
+        heat_index_f=weather["temp_f"],
+        rain_24h_in=0.0,  # keep simple for now
+        wind_sust_mph=weather["wind_mph"],
         tropical_flag=False,
-        pop_density=1200
+        pop_density=county_meta["pop_density_per_sqmi"],
     )
 
     heat = heat_score_fl(inputs_today.month, inputs_today.heat_index_f)
