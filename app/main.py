@@ -351,6 +351,44 @@ async def get_airnow_aqi(lat: float, lon: float):
 
     return data[0].get("AQI")
 
+async def get_weather(lat: float, lon: float):
+    headers = {"User-Agent": "Daymark (hello.daymark@gmail.com)"}
+
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        r = await client.get(f"{NWS_BASE}/points/{lat},{lon}", headers=headers)
+        r.raise_for_status()
+        grid = r.json()["properties"]
+
+        forecast_url = grid["forecast"]
+
+        r2 = await client.get(forecast_url, headers=headers)
+        r2.raise_for_status()
+        forecast = r2.json()
+
+        periods = forecast.get("properties", {}).get("periods", [])
+        if not periods:
+            return {"temp_f": 75, "wind_mph": 10}
+
+        period = periods[0]
+
+        temp_f = period.get("temperature", 75)
+
+        wind_raw = period.get("windSpeed", "10 mph")
+        wind_mph = 10
+        if isinstance(wind_raw, str):
+            first_part = wind_raw.split()[0]
+            if "-" in first_part:
+                first_part = first_part.split("-")[0]
+            try:
+                wind_mph = int(first_part)
+            except ValueError:
+                wind_mph = 10
+
+        return {
+            "temp_f": temp_f,
+            "wind_mph": wind_mph,
+        }
+
 async def get_nws_alert_count(lat: float, lon: float) -> int:
     url = f"{NWS_BASE}/alerts/active"
     params = {"point": f"{lat},{lon}"}
