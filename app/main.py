@@ -562,8 +562,21 @@ async def collect_insurer_florida(
 
 
     results = []
-    for county in STARTER_FL_COUNTIES:
-        payload = await compute_insurer_fl_county(county)
+        for county in STARTER_FL_COUNTIES:
+        county_meta = FL_COUNTY_META.get(county)
+        if not county_meta:
+            continue
+
+        weather = await get_weather(
+            county_meta["centroid_lat"],
+            county_meta["centroid_lon"],
+        )
+
+        payload = await compute_insurer_fl_county(
+            county=county,
+            county_meta=county_meta,
+            weather=weather,
+        )
         results.append(payload)
 
         if DATABASE_URL:
@@ -577,10 +590,9 @@ async def collect_insurer_florida(
                 model_version="v1",
             )
 
-            county_meta = FL_COUNTY_META.get(county)
             county_fips = payload.get("county_fips")
 
-            if county_meta and county_fips:
+            if county_fips:
                 await upsert_county_input(
                     fips=county_fips,
                     state="FL",
@@ -602,6 +614,7 @@ async def collect_insurer_florida(
                         "state_label": payload.get("state"),
                         "model_version": "v1",
                         "scores": payload["scores"],
+                        "weather": weather,
                     },
                 )
     return {
