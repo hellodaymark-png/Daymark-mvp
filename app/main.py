@@ -560,9 +560,9 @@ async def collect_insurer_florida(
     run_id = uuid.uuid4()
     snapshot_at = datetime.now(timezone.utc)
 
-
     results = []
-        for county in STARTER_FL_COUNTIES:
+
+    for county in STARTER_FL_COUNTIES:
         county_meta = FL_COUNTY_META.get(county)
         if not county_meta:
             continue
@@ -577,6 +577,7 @@ async def collect_insurer_florida(
             county_meta=county_meta,
             weather=weather,
         )
+
         results.append(payload)
 
         if DATABASE_URL:
@@ -617,6 +618,7 @@ async def collect_insurer_florida(
                         "weather": weather,
                     },
                 )
+
     return {
         "ok": True,
         "run_id": str(run_id),
