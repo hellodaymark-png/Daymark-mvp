@@ -904,6 +904,8 @@ def founder_florida_dashboard():
                   <td><span class="risk-pill ${riskClass(row.risk_score)}">${row.risk_score ?? "-"}</span></td>
                   <td>${row.temp_f ?? "-"}</td>
                   <td>${row.wind_mph ?? "-"}</td>
+                  <td>${row.rain_chance_pct ?? "-"}</td>
+                  <td>${row.rain_24h_in ?? "-"}</td>
                   <td>${row.grid_stress_score ?? "-"}</td>
                   <td>${row.weather_stress_score ?? "-"}</td>
                 </tr>
