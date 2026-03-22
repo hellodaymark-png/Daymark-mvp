@@ -357,10 +357,11 @@ async def get_weather(lat: float, lon: float):
     default_weather = {
         "temp_f": 75,
         "wind_mph": 10,
+        "rain_chance_pct": 0,
+        "rain_24h_in": 0.0,
     }
 
     async with httpx.AsyncClient(timeout=20.0) as client:
-        # Step 1: get point metadata
         r = await client.get(f"{NWS_BASE}/points/{lat},{lon}", headers=headers)
         r.raise_for_status()
         props = r.json()["properties"]
@@ -398,16 +399,38 @@ async def get_weather(lat: float, lon: float):
                     except ValueError:
                         wind_mph = 10
 
+                rain_chance_pct = 0
+                precip = period.get("probabilityOfPrecipitation")
+                if isinstance(precip, dict):
+                    value = precip.get("value")
+                    if value is not None:
+                        try:
+                            rain_chance_pct = int(value)
+                        except (ValueError, TypeError):
+                            rain_chance_pct = 0
+
+                # simple v1 rain proxy from precip chance
+                if rain_chance_pct >= 80:
+                    rain_24h_in = 1.0
+                elif rain_chance_pct >= 60:
+                    rain_24h_in = 0.5
+                elif rain_chance_pct >= 40:
+                    rain_24h_in = 0.2
+                elif rain_chance_pct >= 20:
+                    rain_24h_in = 0.05
+                else:
+                    rain_24h_in = 0.0
+
                 return {
                     "temp_f": temp_f,
                     "wind_mph": wind_mph,
+                    "rain_chance_pct": rain_chance_pct,
+                    "rain_24h_in": rain_24h_in,
                 }
 
             except httpx.HTTPStatusError:
-                # try the next URL
                 continue
             except Exception:
-                # keep collector alive even if parsing fails
                 continue
 
     return default_weather
@@ -437,12 +460,14 @@ async def compute_insurer_fl_county(
 
     temp_f = weather.get("temp_f", 75)
     wind_mph = weather.get("wind_mph", 10)
+    rain_24h_in = weather.get("rain_24h_in", 0.0)
+    rain_chance_pct = weather.get("rain_chance_pct", 0)
     pop_density = county_meta["pop_density_per_sqmi"]
 
     inputs_today = FloridaInputs(
         month=datetime.utcnow().month,
         heat_index_f=temp_f,
-        rain_24h_in=0.0,  # keep simple for now
+        rain_24h_in=rain_24h_in,
         wind_sust_mph=wind_mph,
         tropical_flag=False,
         pop_density=pop_density,
@@ -452,11 +477,21 @@ async def compute_insurer_fl_county(
     rain = rain_score_fl(inputs_today.rain_24h_in, inputs_today.tropical_flag)
     wind = wind_score_fl(inputs_today.wind_sust_mph, inputs_today.tropical_flag)
 
-    # Make weather stress react more clearly to real county weather
     temp_boost = max(0, (temp_f - 70) * 0.5)
     wind_boost = wind_mph * 1.5
+    rain_boost = min(20, rain_chance_pct * 0.2)
+
     wps_raw = compute_wps_fl(heat, rain, wind)
-    wps = min(100, round((wps_raw * 0.4) + (temp_boost * 0.3) + (wind_boost * 0.3), 1))
+    wps = min(
+        100,
+        round(
+            (wps_raw * 0.35)
+            + (temp_boost * 0.25)
+            + (wind_boost * 0.2)
+            + (rain_boost * 0.2),
+            1,
+        ),
+    )
 
     persistence = 40
     iss = round(compute_iss_fl(heat, inputs_today.pop_density, persistence), 1)
@@ -506,6 +541,8 @@ async def compute_insurer_fl_county(
         "AV": round(av, 1) if isinstance(av, (int, float)) else av,
         "temp_f": temp_f,
         "wind_mph": wind_mph,
+        "rain_chance_pct": rain_chance_pct,
+        "rain_24h_in": rain_24h_in,
         "pop_density_per_sqmi": pop_density,
     }
 
