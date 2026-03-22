@@ -837,9 +837,9 @@ def founder_florida_dashboard():
         <script>
           function riskClass(score) {
             if (score == null) return "green";
-            if (score < 35) return "green";
-            if (score < 50) return "yellow";
-            if (score < 65) return "orange";
+            if (score < 40) return "green";
+            if (score < 55) return "yellow";
+            if (score < 70) return "orange";
             return "red";
           }
 
