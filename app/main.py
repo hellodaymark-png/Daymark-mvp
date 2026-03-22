@@ -689,7 +689,50 @@ async def latest_snapshots(state: str = "Florida", limit: int = 25):
         "count": len(rows),
         "rows": [dict(r) for r in rows],
     }
+@app.get("/api/founder/florida/latest")
+async def founder_florida_latest(limit: int = 20):
+    if not DATABASE_URL:
+        return {"ok": False, "error": "DATABASE_URL not set"}
 
+    pool = await get_db_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT
+                c.county_name,
+                s.county_fips,
+                s.snapshot_ts,
+                s.risk_score,
+                s.grid_stress_score,
+                s.weather_stress_score,
+                s.payload
+            FROM county_snapshots s
+            JOIN counties c
+              ON c.fips = s.county_fips
+            WHERE s.snapshot_ts = (
+                SELECT MAX(snapshot_ts)
+                FROM county_snapshots
+            )
+            ORDER BY s.risk_score DESC NULLS LAST
+            LIMIT $1
+            """,
+            limit,
+        )
+
+    result = []
+    for r in rows:
+        row = dict(r)
+        payload = row.get("payload") or {}
+        weather = payload.get("weather") or {}
+        row["temp_f"] = weather.get("temp_f")
+        row["wind_mph"] = weather.get("wind_mph")
+        result.append(row)
+
+    return {
+        "ok": True,
+        "count": len(result),
+        "rows": result,
+    }
 @app.get("/", response_class=HTMLResponse)
 def home():
     return """
