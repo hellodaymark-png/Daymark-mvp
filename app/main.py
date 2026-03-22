@@ -384,11 +384,10 @@ async def get_weather(lat: float, lon: float):
                 if not periods:
                     continue
 
-                period = periods[0]
+                first_period = periods[0]
+                temp_f = first_period.get("temperature", 75)
 
-                temp_f = period.get("temperature", 75)
-
-                wind_raw = period.get("windSpeed", "10 mph")
+                wind_raw = first_period.get("windSpeed", "10 mph")
                 wind_mph = 10
                 if isinstance(wind_raw, str):
                     first_part = wind_raw.split()[0]
@@ -399,17 +398,24 @@ async def get_weather(lat: float, lon: float):
                     except ValueError:
                         wind_mph = 10
 
-                rain_chance_pct = 0
-                precip = period.get("probabilityOfPrecipitation")
-                if isinstance(precip, dict):
-                    value = precip.get("value")
-                    if value is not None:
-                        try:
-                            rain_chance_pct = int(value)
-                        except (ValueError, TypeError):
-                            rain_chance_pct = 0
+                # Look ahead across the next forecast periods
+                # forecastHourly: about next 12 hours
+                # forecast: about next several half-days
+                lookahead_periods = periods[:12] if "forecastHourly" in forecast_url else periods[:4]
 
-                # simple v1 rain proxy from precip chance
+                rain_values = []
+                for p in lookahead_periods:
+                    precip = p.get("probabilityOfPrecipitation")
+                    if isinstance(precip, dict):
+                        value = precip.get("value")
+                        if value is not None:
+                            try:
+                                rain_values.append(int(value))
+                            except (ValueError, TypeError):
+                                pass
+
+                rain_chance_pct = max(rain_values) if rain_values else 0
+
                 if rain_chance_pct >= 80:
                     rain_24h_in = 1.0
                 elif rain_chance_pct >= 60:
