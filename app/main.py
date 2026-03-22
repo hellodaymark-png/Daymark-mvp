@@ -722,8 +722,19 @@ async def founder_florida_latest(limit: int = 20):
     result = []
     for r in rows:
         row = dict(r)
+
         payload = row.get("payload") or {}
+        if isinstance(payload, str):
+            try:
+                payload = json.loads(payload)
+            except json.JSONDecodeError:
+                payload = {}
+
         weather = payload.get("weather") or {}
+        if not isinstance(weather, dict):
+            weather = {}
+
+        row["payload"] = payload
         row["temp_f"] = weather.get("temp_f")
         row["wind_mph"] = weather.get("wind_mph")
         result.append(row)
