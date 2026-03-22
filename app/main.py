@@ -462,7 +462,8 @@ async def compute_insurer_fl_county(
     iss = round(compute_iss_fl(heat, inputs_today.pop_density, persistence), 1)
 
     das = 10
-    cai = round(compute_cai_fl(wps, iss, das), 1)
+    cai_raw = compute_cai_fl(wps, iss, das)
+    cai = round(min(100, cai_raw * 1.8), 1)
 
     cai_history_5d = [45, 47, 50, 54, cai]
     delta_3d = cai - cai_history_5d[-4]
