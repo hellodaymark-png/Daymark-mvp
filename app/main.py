@@ -463,7 +463,7 @@ async def compute_insurer_fl_county(
 
     das = 10
     cai_raw = compute_cai_fl(wps, iss, das)
-    cai = round(min(100, cai_raw * 1.8), 1)
+    cai = round(min(100, cai_raw * 3.0), 1)
 
     cai_history_5d = [45, 47, 50, 54, cai]
     delta_3d = cai - cai_history_5d[-4]
