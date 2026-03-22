@@ -733,6 +733,138 @@ async def founder_florida_latest(limit: int = 20):
         "count": len(result),
         "rows": result,
     }
+@app.get("/founder/florida", response_class=HTMLResponse)
+def founder_florida_dashboard():
+    return """
+    <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Daymark Founder Dashboard</title>
+        <style>
+          body {
+            font-family: system-ui, sans-serif;
+            background: #f7f7f8;
+            margin: 0;
+            padding: 24px;
+            color: #111;
+          }
+          .wrap {
+            max-width: 1100px;
+            margin: 0 auto;
+          }
+          .card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+            margin-bottom: 20px;
+          }
+          h1 {
+            margin: 0 0 8px 0;
+          }
+          .sub {
+            color: #666;
+            margin-bottom: 16px;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+          }
+          th, td {
+            text-align: left;
+            padding: 10px 8px;
+            border-bottom: 1px solid #eee;
+          }
+          th {
+            color: #555;
+            font-weight: 600;
+          }
+          .risk-pill {
+            display: inline-block;
+            min-width: 58px;
+            text-align: center;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-weight: 700;
+          }
+          .green { background: #e7f6ec; color: #1f7a3d; }
+          .yellow { background: #fff6db; color: #8a6a00; }
+          .orange { background: #ffe8d9; color: #a24b00; }
+          .red { background: #fde6e6; color: #b42318; }
+          .muted {
+            color: #666;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="wrap">
+          <div class="card">
+            <h1>Daymark Founder Dashboard</h1>
+            <div class="sub">Florida latest county risk snapshot</div>
+            <div id="meta" class="muted">Loading...</div>
+          </div>
+
+          <div class="card">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>County</th>
+                  <th>Risk</th>
+                  <th>Temp °F</th>
+                  <th>Wind mph</th>
+                  <th>Grid Stress</th>
+                  <th>Weather Stress</th>
+                </tr>
+              </thead>
+              <tbody id="rows"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <script>
+          function riskClass(score) {
+            if (score == null) return "green";
+            if (score < 35) return "green";
+            if (score < 50) return "yellow";
+            if (score < 65) return "orange";
+            return "red";
+          }
+
+          fetch("/api/founder/florida/latest?limit=20")
+            .then(r => r.json())
+            .then(data => {
+              const meta = document.getElementById("meta");
+              const tbody = document.getElementById("rows");
+
+              if (!data.ok) {
+                meta.textContent = "Failed to load data";
+                return;
+              }
+
+              meta.textContent = "Showing top " + data.count + " counties by latest risk score";
+
+              tbody.innerHTML = data.rows.map((row, i) => `
+                <tr>
+                  <td>${i + 1}</td>
+                  <td>${row.county_name}</td>
+                  <td><span class="risk-pill ${riskClass(row.risk_score)}">${row.risk_score ?? "-"}</span></td>
+                  <td>${row.temp_f ?? "-"}</td>
+                  <td>${row.wind_mph ?? "-"}</td>
+                  <td>${row.grid_stress_score ?? "-"}</td>
+                  <td>${row.weather_stress_score ?? "-"}</td>
+                </tr>
+              `).join("");
+            })
+            .catch(() => {
+              document.getElementById("meta").textContent = "Error loading dashboard";
+            });
+        </script>
+      </body>
+    </html>
+    """
+
 @app.get("/", response_class=HTMLResponse)
 def home():
     return """
