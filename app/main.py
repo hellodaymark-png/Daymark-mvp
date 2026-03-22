@@ -354,40 +354,63 @@ async def get_airnow_aqi(lat: float, lon: float):
 async def get_weather(lat: float, lon: float):
     headers = {"User-Agent": "Daymark (hello.daymark@gmail.com)"}
 
+    default_weather = {
+        "temp_f": 75,
+        "wind_mph": 10,
+    }
+
     async with httpx.AsyncClient(timeout=20.0) as client:
+        # Step 1: get point metadata
         r = await client.get(f"{NWS_BASE}/points/{lat},{lon}", headers=headers)
         r.raise_for_status()
-        grid = r.json()["properties"]
+        props = r.json()["properties"]
 
-        forecast_url = grid["forecast"]
+        forecast_urls = [
+            props.get("forecastHourly"),
+            props.get("forecast"),
+        ]
 
-        r2 = await client.get(forecast_url, headers=headers)
-        r2.raise_for_status()
-        forecast = r2.json()
+        for forecast_url in forecast_urls:
+            if not forecast_url:
+                continue
 
-        periods = forecast.get("properties", {}).get("periods", [])
-        if not periods:
-            return {"temp_f": 75, "wind_mph": 10}
-
-        period = periods[0]
-
-        temp_f = period.get("temperature", 75)
-
-        wind_raw = period.get("windSpeed", "10 mph")
-        wind_mph = 10
-        if isinstance(wind_raw, str):
-            first_part = wind_raw.split()[0]
-            if "-" in first_part:
-                first_part = first_part.split("-")[0]
             try:
-                wind_mph = int(first_part)
-            except ValueError:
-                wind_mph = 10
+                r2 = await client.get(forecast_url, headers=headers)
+                r2.raise_for_status()
+                forecast = r2.json()
 
-        return {
-            "temp_f": temp_f,
-            "wind_mph": wind_mph,
-        }
+                periods = forecast.get("properties", {}).get("periods", [])
+                if not periods:
+                    continue
+
+                period = periods[0]
+
+                temp_f = period.get("temperature", 75)
+
+                wind_raw = period.get("windSpeed", "10 mph")
+                wind_mph = 10
+                if isinstance(wind_raw, str):
+                    first_part = wind_raw.split()[0]
+                    if "-" in first_part:
+                        first_part = first_part.split("-")[0]
+                    try:
+                        wind_mph = int(first_part)
+                    except ValueError:
+                        wind_mph = 10
+
+                return {
+                    "temp_f": temp_f,
+                    "wind_mph": wind_mph,
+                }
+
+            except httpx.HTTPStatusError:
+                # try the next URL
+                continue
+            except Exception:
+                # keep collector alive even if parsing fails
+                continue
+
+    return default_weather
 
 async def get_nws_alert_count(lat: float, lon: float) -> int:
     url = f"{NWS_BASE}/alerts/active"
