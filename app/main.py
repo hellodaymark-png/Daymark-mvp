@@ -461,6 +461,7 @@ async def compute_insurer_fl_county(
     county: str,
     county_meta: dict,
     weather: dict,
+    alert_count: int = 0,
 ) -> dict:
     county_fips = county_meta["fips"]
 
@@ -486,15 +487,17 @@ async def compute_insurer_fl_county(
     temp_boost = max(0, (temp_f - 70) * 0.5)
     wind_boost = wind_mph * 1.5
     rain_boost = min(20, rain_chance_pct * 0.2)
+    alert_boost = min(25, alert_count * 8)
 
     wps_raw = compute_wps_fl(heat, rain, wind)
     wps = min(
         100,
         round(
-            (wps_raw * 0.35)
-            + (temp_boost * 0.25)
+            (wps_raw * 0.3)
+            + (temp_boost * 0.2)
             + (wind_boost * 0.2)
-            + (rain_boost * 0.2),
+            + (rain_boost * 0.15)
+            + (alert_boost * 0.15),
             1,
         ),
     )
@@ -537,6 +540,7 @@ async def compute_insurer_fl_county(
         "HeatScore": round(heat, 1),
         "RainScore": round(rain, 1),
         "WindScore": round(wind, 1),
+        "AlertCount": alert_count,
         "WPS": round(wps, 1),
         "ISS": round(iss, 1),
         "DAS": das,
@@ -647,8 +651,13 @@ async def collect_insurer_florida(
         county_meta = FL_COUNTY_META.get(county)
         if not county_meta:
             continue
-
+            
         weather = await get_weather(
+            county_meta["centroid_lat"],
+            county_meta["centroid_lon"],
+        )
+
+        alert_count = await get_nws_alert_count(
             county_meta["centroid_lat"],
             county_meta["centroid_lon"],
         )
@@ -657,6 +666,7 @@ async def collect_insurer_florida(
             county=county,
             county_meta=county_meta,
             weather=weather,
+            alert_count=alert_count,
         )
 
         results.append(payload)
@@ -697,9 +707,10 @@ async def collect_insurer_florida(
                         "model_version": "v1",
                         "scores": payload["scores"],
                         "weather": weather,
+                        "alerts": {
+                            "count": alert_count
+                        },
                     },
-                )
-
     return {
         "ok": True,
         "run_id": str(run_id),
@@ -777,11 +788,16 @@ async def founder_florida_latest(limit: int = 20):
         if not isinstance(weather, dict):
             weather = {}
 
+       alerts = payload.get("alerts") or {}
+        if not isinstance(alerts, dict):
+            alerts = {}
+            
         row["payload"] = payload
         row["temp_f"] = weather.get("temp_f")
         row["wind_mph"] = weather.get("wind_mph")
         row["rain_chance_pct"] = weather.get("rain_chance_pct")
         row["rain_24h_in"] = weather.get("rain_24h_in")
+        row["alert_count"] = alerts.get("count", 0)
         result.append(row)
 
     return {
@@ -872,6 +888,7 @@ def founder_florida_dashboard():
                   <th>Wind mph</th>
                   <th>Rain %</th>
                   <th>Rain (in)</th>
+                  <th>Alerts</th>
                   <th>Grid Stress</th>
                   <th>Weather Stress</th>
                 </tr>
@@ -912,6 +929,7 @@ def founder_florida_dashboard():
                   <td>${row.wind_mph ?? "-"}</td>
                   <td>${row.rain_chance_pct ?? "-"}</td>
                   <td>${row.rain_24h_in ?? "-"}</td>
+                  <td>${row.alert_count ?? 0}</td>
                   <td>${row.grid_stress_score ?? "-"}</td>
                   <td>${row.weather_stress_score ?? "-"}</td>
                 </tr>
