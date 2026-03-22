@@ -433,29 +433,36 @@ async def compute_insurer_fl_county(
     county_meta: dict,
     weather: dict,
 ) -> dict:
-
     county_fips = county_meta["fips"]
+
+    temp_f = weather.get("temp_f", 75)
+    wind_mph = weather.get("wind_mph", 10)
+    pop_density = county_meta["pop_density_per_sqmi"]
 
     inputs_today = FloridaInputs(
         month=datetime.utcnow().month,
-        heat_index_f=weather["temp_f"],
+        heat_index_f=temp_f,
         rain_24h_in=0.0,  # keep simple for now
-        wind_sust_mph=weather["wind_mph"],
+        wind_sust_mph=wind_mph,
         tropical_flag=False,
-        pop_density=county_meta["pop_density_per_sqmi"],
+        pop_density=pop_density,
     )
 
     heat = heat_score_fl(inputs_today.month, inputs_today.heat_index_f)
     rain = rain_score_fl(inputs_today.rain_24h_in, inputs_today.tropical_flag)
     wind = wind_score_fl(inputs_today.wind_sust_mph, inputs_today.tropical_flag)
 
-    wps = compute_wps_fl(heat, rain, wind)
+    # Make weather stress react more clearly to real county weather
+    temp_boost = max(0, (temp_f - 70) * 0.5)
+    wind_boost = wind_mph * 1.5
+    wps_raw = compute_wps_fl(heat, rain, wind)
+    wps = min(100, round((wps_raw * 0.4) + (temp_boost * 0.3) + (wind_boost * 0.3), 1))
 
     persistence = 40
-    iss = compute_iss_fl(heat, inputs_today.pop_density, persistence)
+    iss = round(compute_iss_fl(heat, inputs_today.pop_density, persistence), 1)
 
     das = 10
-    cai = compute_cai_fl(wps, iss, das)
+    cai = round(compute_cai_fl(wps, iss, das), 1)
 
     cai_history_5d = [45, 47, 50, 54, cai]
     delta_3d = cai - cai_history_5d[-4]
@@ -466,7 +473,11 @@ async def compute_insurer_fl_county(
 
     forecast_wps_3d_avg = wps
     wind_score_max_3d = wind
-    fpc = fpc_from_forecast(forecast_wps_3d_avg, wind_score_max_3d, inputs_today.tropical_flag)
+    fpc = fpc_from_forecast(
+        forecast_wps_3d_avg,
+        wind_score_max_3d,
+        inputs_today.tropical_flag,
+    )
 
     wind_48h_ago_score = 30
     sts = apply_florida_wind_nuance(
@@ -474,31 +485,34 @@ async def compute_insurer_fl_county(
         wind,
         wind_48h_ago_score,
         forecast_wps_3d_avg,
-        inputs_today.tropical_flag
+        inputs_today.tropical_flag,
     )
 
     av = compute_av(sts, vex, fpc)
     state_label = label_state(cai, av)
 
     scores = {
-        "HeatScore": heat,
-        "RainScore": rain,
-        "WindScore": wind,
-        "WPS": wps,
-        "ISS": iss,
+        "HeatScore": round(heat, 1),
+        "RainScore": round(rain, 1),
+        "WindScore": round(wind, 1),
+        "WPS": round(wps, 1),
+        "ISS": round(iss, 1),
         "DAS": das,
-        "CAI": cai,
-        "STS": sts,
-        "VEX": vex,
-        "FPC": fpc,
-        "AV": av,
+        "CAI": round(cai, 1),
+        "STS": round(sts, 1) if isinstance(sts, (int, float)) else sts,
+        "VEX": round(vex, 1) if isinstance(vex, (int, float)) else vex,
+        "FPC": round(fpc, 1) if isinstance(fpc, (int, float)) else fpc,
+        "AV": round(av, 1) if isinstance(av, (int, float)) else av,
+        "temp_f": temp_f,
+        "wind_mph": wind_mph,
+        "pop_density_per_sqmi": pop_density,
     }
 
     return {
         "county": county,
         "county_fips": county_fips,
         "scores": scores,
-        "state": state_label
+        "state": state_label,
     }
 # -----------------------------
 # Routes
