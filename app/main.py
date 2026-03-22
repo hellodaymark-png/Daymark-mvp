@@ -774,6 +774,8 @@ async def founder_florida_latest(limit: int = 20):
         row["payload"] = payload
         row["temp_f"] = weather.get("temp_f")
         row["wind_mph"] = weather.get("wind_mph")
+        row["rain_chance_pct"] = weather.get("rain_chance_pct")
+        row["rain_24h_in"] = weather.get("rain_24h_in")
         result.append(row)
 
     return {
@@ -862,6 +864,8 @@ def founder_florida_dashboard():
                   <th>Risk</th>
                   <th>Temp °F</th>
                   <th>Wind mph</th>
+                  <th>Rain %</th>
+                  <th>Rain (in)</th>
                   <th>Grid Stress</th>
                   <th>Weather Stress</th>
                 </tr>
