@@ -774,7 +774,7 @@ async def founder_florida_latest(limit: int = 20):
             limit,
         )
 
-    result = []
+     result = []
     for r in rows:
         row = dict(r)
 
@@ -789,16 +789,17 @@ async def founder_florida_latest(limit: int = 20):
         if not isinstance(weather, dict):
             weather = {}
 
-       alerts = payload.get("alerts") or {}
+        alerts = payload.get("alerts") or {}
         if not isinstance(alerts, dict):
             alerts = {}
-            
+
         row["payload"] = payload
         row["temp_f"] = weather.get("temp_f")
         row["wind_mph"] = weather.get("wind_mph")
         row["rain_chance_pct"] = weather.get("rain_chance_pct")
         row["rain_24h_in"] = weather.get("rain_24h_in")
         row["alert_count"] = alerts.get("count", 0)
+
         result.append(row)
 
     return {
