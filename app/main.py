@@ -744,6 +744,70 @@ async def latest_snapshots(state: str = "Florida", limit: int = 25):
         "count": len(rows),
         "rows": [dict(r) for r in rows],
     }
+    return {
+        "ok": True,
+        "run_id": str(run_id),
+        "snapshot_at": snapshot_at.isoformat(),
+        "state": "Florida",
+        "counties": results,
+        "recorded": bool(DATABASE_URL),
+    }
+@app.get("/api/insurer/snapshots/latest")
+async def latest_snapshots(state: str = "Florida", limit: int = 25):
+    if not DATABASE_URL:
+        return {"ok": False, "error": "DATABASE_URL not set"}
+
+    pool = await get_db_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            select id, run_id, snapshot_at, state, county, state_label, scores
+            from insurer_snapshots
+            where state = $1
+            order by snapshot_at desc
+            limit $2
+            """,
+            state,
+            limit,
+        )
+
+    return {
+        "ok": True,
+        "count": len(rows),
+        "rows": [dict(r) for r in rows],
+    }
+    return {
+        "ok": True,
+        "run_id": str(run_id),
+        "snapshot_at": snapshot_at.isoformat(),
+        "state": "Florida",
+        "counties": results,
+        "recorded": bool(DATABASE_URL),
+    }
+@app.get("/api/insurer/snapshots/latest")
+async def latest_snapshots(state: str = "Florida", limit: int = 25):
+    if not DATABASE_URL:
+        return {"ok": False, "error": "DATABASE_URL not set"}
+
+    pool = await get_db_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            select id, run_id, snapshot_at, state, county, state_label, scores
+            from insurer_snapshots
+            where state = $1
+            order by snapshot_at desc
+            limit $2
+            """,
+            state,
+            limit,
+        )
+
+    return {
+        "ok": True,
+        "count": len(rows),
+        "rows": [dict(r) for r in rows],
+    }
 @app.get("/api/founder/florida/latest")
 async def founder_florida_latest(limit: int = 20):
     if not DATABASE_URL:
@@ -786,32 +850,7 @@ rows = await conn.fetch(
         payload = row.get("payload") or {}
         if isinstance(payload, str):
             try:
-                payload = json.loads(payload)
-            except json.JSONDecodeError:
-                payload = {}
-
-        weather = payload.get("weather") or {}
-        if not isinstance(weather, dict):
-            weather = {}
-
-        alerts = payload.get("alerts") or {}
-        if not isinstance(alerts, dict):
-            alerts = {}
-
-        row["payload"] = payload
-        row["temp_f"] = weather.get("temp_f")
-        row["wind_mph"] = weather.get("wind_mph")
-        row["rain_chance_pct"] = weather.get("rain_chance_pct")
-        row["rain_24h_in"] = weather.get("rain_24h_in")
-        row["alert_count"] = alerts.get("count", 0)
-
-        result.append(row)
-
-    return {
-        "ok": True,
-        "count": len(result),
-        "rows": result,
-    }
+                payload = 
 @app.get("/founder/florida", response_class=HTMLResponse)
 def founder_florida_dashboard():
     return """
