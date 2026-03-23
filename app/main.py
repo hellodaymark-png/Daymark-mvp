@@ -751,28 +751,31 @@ async def founder_florida_latest(limit: int = 20):
 
     conn = await asyncpg.connect(DATABASE_URL)
 
-    rows = await conn.fetch(
-        """
-        SELECT
-            c.county_name,
-            s.county_fips,
-            s.snapshot_ts,
-            s.risk_score,
-            s.grid_stress_score,
-            s.weather_stress_score,
-            s.payload
-        FROM county_snapshots s
-        JOIN counties c
-          ON c.fips = s.county_fips
-        WHERE s.snapshot_ts = (
-            SELECT MAX(snapshot_ts)
-            FROM county_snapshots
-        )
-        ORDER BY s.risk_score DESC NULLS LAST
-        LIMIT $1
-        """,
-        limit,
-    )
+rows = await conn.fetch(
+    """
+    SELECT
+        c.county_name,
+        s.county_fips,
+        s.snapshot_ts,
+        s.risk_score,
+        s.grid_stress_score,
+        s.weather_stress_score,
+        s.payload
+    FROM county_snapshots s
+    JOIN counties c
+      ON c.fips = s.county_fips
+    JOIN (
+        SELECT county_fips, MAX(snapshot_ts) AS max_snapshot_ts
+        FROM county_snapshots
+        GROUP BY county_fips
+    ) latest
+      ON s.county_fips = latest.county_fips
+     AND s.snapshot_ts = latest.max_snapshot_ts
+    ORDER BY s.risk_score DESC NULLS LAST
+    LIMIT $1
+    """,
+    limit,
+)
 
     await conn.close()
 
