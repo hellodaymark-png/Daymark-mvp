@@ -815,31 +815,31 @@ async def founder_florida_latest(limit: int = 20):
 
     conn = await asyncpg.connect(DATABASE_URL)
 
-rows = await conn.fetch(
-    """
-    SELECT
-        c.county_name,
-        s.county_fips,
-        s.snapshot_ts,
-        s.risk_score,
-        s.grid_stress_score,
-        s.weather_stress_score,
-        s.payload
-    FROM county_snapshots s
-    JOIN counties c
-      ON c.fips = s.county_fips
-    JOIN (
-        SELECT county_fips, MAX(snapshot_ts) AS max_snapshot_ts
-        FROM county_snapshots
-        GROUP BY county_fips
-    ) latest
-      ON s.county_fips = latest.county_fips
-     AND s.snapshot_ts = latest.max_snapshot_ts
-    ORDER BY s.risk_score DESC NULLS LAST
-    LIMIT $1
-    """,
-    limit,
-)
+    rows = await conn.fetch(
+        """
+        SELECT
+            c.county_name,
+            s.county_fips,
+            s.snapshot_ts,
+            s.risk_score,
+            s.grid_stress_score,
+            s.weather_stress_score,
+            s.payload
+        FROM county_snapshots s
+        JOIN counties c
+          ON c.fips = s.county_fips
+        JOIN (
+            SELECT county_fips, MAX(snapshot_ts) AS max_snapshot_ts
+            FROM county_snapshots
+            GROUP BY county_fips
+        ) latest
+          ON s.county_fips = latest.county_fips
+         AND s.snapshot_ts = latest.max_snapshot_ts
+        ORDER BY s.risk_score DESC NULLS LAST
+        LIMIT $1
+        """,
+        limit,
+    )
 
     await conn.close()
 
@@ -850,7 +850,32 @@ rows = await conn.fetch(
         payload = row.get("payload") or {}
         if isinstance(payload, str):
             try:
-                payload = 
+                payload = json.loads(payload)
+            except json.JSONDecodeError:
+                payload = {}
+
+        weather = payload.get("weather") or {}
+        if not isinstance(weather, dict):
+            weather = {}
+
+        alerts = payload.get("alerts") or {}
+        if not isinstance(alerts, dict):
+            alerts = {}
+
+        row["payload"] = payload
+        row["temp_f"] = weather.get("temp_f")
+        row["wind_mph"] = weather.get("wind_mph")
+        row["rain_chance_pct"] = weather.get("rain_chance_pct")
+        row["rain_24h_in"] = weather.get("rain_24h_in")
+        row["alert_count"] = alerts.get("count", 0)
+
+        result.append(row)
+
+    return {
+        "ok": True,
+        "count": len(result),
+        "rows": result,
+    }
 @app.get("/founder/florida", response_class=HTMLResponse)
 def founder_florida_dashboard():
     return """
