@@ -745,19 +745,34 @@ async def latest_snapshots(state: str = "Florida", limit: int = 25):
         "rows": [dict(r) for r in rows],
     }
 @app.get("/api/founder/florida/latest")
-async def founder_florida_latest():
-
+async def founder_florida_latest(limit: int = 20):
     if not DATABASE_URL:
         return {"rows": []}
 
     conn = await asyncpg.connect(DATABASE_URL)
 
-    rows = await conn.fetch("""
-        SELECT *
-        FROM county_latest
-        WHERE state = 'FL'
-        ORDER BY county_name
-    """)
+    rows = await conn.fetch(
+        """
+        SELECT
+            c.county_name,
+            s.county_fips,
+            s.snapshot_ts,
+            s.risk_score,
+            s.grid_stress_score,
+            s.weather_stress_score,
+            s.payload
+        FROM county_snapshots s
+        JOIN counties c
+          ON c.fips = s.county_fips
+        WHERE s.snapshot_ts = (
+            SELECT MAX(snapshot_ts)
+            FROM county_snapshots
+        )
+        ORDER BY s.risk_score DESC NULLS LAST
+        LIMIT $1
+        """,
+        limit,
+    )
 
     await conn.close()
 
@@ -789,7 +804,11 @@ async def founder_florida_latest():
 
         result.append(row)
 
-    return {"rows": result}
+    return {
+        "ok": True,
+        "count": len(result),
+        "rows": result,
+    }
 @app.get("/founder/florida", response_class=HTMLResponse)
 def founder_florida_dashboard():
     return """
