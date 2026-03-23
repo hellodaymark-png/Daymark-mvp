@@ -693,7 +693,6 @@ async def collect_insurer_florida(
                     centroid_lon=county_meta["centroid_lon"],
                     pop_density_per_sqmi=county_meta.get("pop_density_per_sqmi"),
                 )
-
                 await record_county_snapshot(
                     county_fips=county_fips,
                     snapshot_ts=snapshot_at,
@@ -711,6 +710,8 @@ async def collect_insurer_florida(
                             "count": alert_count
                         },
                     },
+                )
+
     return {
         "ok": True,
         "run_id": str(run_id),
