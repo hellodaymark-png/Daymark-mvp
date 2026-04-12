@@ -274,9 +274,10 @@ async def record_county_snapshot(
 
 @app.on_event("startup")
 async def _startup():
-    # Only attempt DB init if DATABASE_URL exists
-    if DATABASE_URL:
-        await ensure_tables()
+    print("Startup complete (DB init skipped)")
+
+async def ensure_tables():
+    return
 
 
 # -----------------------------
