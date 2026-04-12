@@ -4,7 +4,6 @@ import os
 import json
 import uuid
 import httpx
-import asyncpg
 from datetime import datetime, timezone
 
 from fastapi import Header, HTTPException
