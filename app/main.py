@@ -193,7 +193,6 @@ async def get_db_pool() -> asyncpg.Pool:
     if _db_pool is None:
         if not DATABASE_URL:
             raise RuntimeError("DATABASE_URL is not set")
-        _db_pool = await asyncpg.create_pool(DATABASE_URL, min_size=1, max_size=5)
     return _db_pool
 
 
