@@ -4,8 +4,6 @@ from typing import Optional, Any, Dict, List
 from datetime import datetime, timedelta, timezone
 import json
 
-from app.db import get_conn
-
 trend_router = APIRouter(prefix="/api/trends", tags=["trends"])
 
 
@@ -57,7 +55,6 @@ def compute_trend_from_scores(scores: List[float]) -> Dict[str, Any]:
     """
     scores must be ordered oldest -> newest
     """
-
     if len(scores) < 7:
         return {
             "direction": "flat",
@@ -94,7 +91,6 @@ def compute_trend_from_scores(scores: List[float]) -> Dict[str, Any]:
     else:
         strength = 3
 
-    # Consistency check using last 3 moves
     if len(scores) >= 4:
         d1 = scores[-1] - scores[-2]
         d2 = scores[-2] - scores[-3]
@@ -151,44 +147,58 @@ def compute_trend_from_scores(scores: List[float]) -> Dict[str, Any]:
     }
 
 
+def build_mock_latest_snapshot(fips: str) -> Dict[str, Any]:
+    # Stable mock score by county FIPS so colors don't reshuffle every refresh
+    base = sum(ord(c) for c in fips) % 101
+
+    return {
+        "snapshot_ts": datetime.now(timezone.utc),
+        "risk_score": float(base),
+        "grid_stress_score": round(base * 0.7, 1),
+        "weather_stress_score": round(base * 0.8, 1),
+        "payload": {
+            "county_fips": fips,
+            "source": "mock",
+        },
+    }
+
+
+def build_mock_last7_points(fips: str) -> List[Dict[str, Any]]:
+    seed = sum(ord(c) for c in fips) % 101
+    now = datetime.now(timezone.utc)
+    points: List[Dict[str, Any]] = []
+
+    # oldest -> newest
+    for days_ago in range(6, -1, -1):
+        score = max(0.0, min(100.0, float(seed - days_ago * 2 + (days_ago % 3))))
+        points.append(
+            {
+                "snapshot_ts": now - timedelta(days=days_ago),
+                "risk_score": score,
+                "grid_stress_score": round(score * 0.7, 1),
+                "weather_stress_score": round(score * 0.8, 1),
+                "payload": {
+                    "county_fips": fips,
+                    "source": "mock",
+                },
+            }
+        )
+
+    return points
+
+
 @trend_router.get("/county/{fips}/latest", response_model=TrendLatestOut)
 async def trend_latest(fips: str):
     if len(fips) != 5:
         raise HTTPException(status_code=400, detail="FIPS must be 5 chars")
 
-    async with get_conn() as conn:
-        rows = await conn.fetch(
-            """
-            SELECT snapshot_ts, risk_score, grid_stress_score, weather_stress_score, payload
-            FROM county_snapshots
-            WHERE county_fips = $1
-            ORDER BY snapshot_ts DESC
-            LIMIT 10
-            """,
-            fips,
-        )
-
-    if not rows:
-        return {
-            "county_fips": fips,
-            "latest": None,
-            "trend": None,
-        }
-
-    latest_row = rows[0]
-    ordered_rows = list(reversed(rows))
-
-    scores = [
-        float(r["risk_score"])
-        for r in ordered_rows
-        if r["risk_score"] is not None
-    ]
-
+    latest_row = build_mock_latest_snapshot(fips)
+    scores = [p["risk_score"] for p in build_mock_last7_points(fips)]
     trend = compute_trend_from_scores(scores)
 
     return {
         "county_fips": fips,
-        "latest": normalize_snapshot_row(latest_row),
+        "latest": latest_row,
         "trend": trend,
     }
 
@@ -198,20 +208,7 @@ async def trend_last7(fips: str):
     if len(fips) != 5:
         raise HTTPException(status_code=400, detail="FIPS must be 5 chars")
 
-    now = datetime.now(timezone.utc)
-    start = now - timedelta(days=7)
-
-    async with get_conn() as conn:
-        rows = await conn.fetch(
-            """
-            SELECT snapshot_ts, risk_score, grid_stress_score, weather_stress_score, payload
-            FROM county_snapshots
-            WHERE county_fips = $1
-              AND snapshot_ts >= $2
-              AND snapshot_ts <= $3
-            ORDER BY snapshot_ts ASC
-            """,
-            fips,
-            start,
-            now,
-        )
+    return {
+        "county_fips": fips,
+        "points": build_mock_last7_points(fips),
+    }
