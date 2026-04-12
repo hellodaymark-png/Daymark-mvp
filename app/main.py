@@ -184,10 +184,7 @@ FL_COUNTY_META = {
     "Broward": {"fips": "12011", "centroid_lat": 26.1224, "centroid_lon": -80.1373, "pop_density_per_sqmi": 1600.0},
     "Palm Beach": {"fips": "12099", "centroid_lat": 26.7153, "centroid_lon": -80.0534, "pop_density_per_sqmi": 774.0},
 }
-
-_db_pool: asyncpg.Pool | None = None
-
-
+_db_pool = None
 # -----------------------------
 # DB setup + snapshot recording
 # -----------------------------
