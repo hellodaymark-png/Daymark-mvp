@@ -188,12 +188,8 @@ _db_pool = None
 # -----------------------------
 # DB setup + snapshot recording
 # -----------------------------
-async def get_db_pool() -> asyncpg.Pool:
-    global _db_pool
-    if _db_pool is None:
-        if not DATABASE_URL:
-            raise RuntimeError("DATABASE_URL is not set")
-    return _db_pool
+async def get_db_pool():
+    return None
 
 
 async def ensure_tables() -> None:
